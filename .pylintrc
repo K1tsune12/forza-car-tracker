@@ -1,0 +1,10 @@
+# Pylint config for the Forza Car Tracker project.
+# These checks are disabled on purpose: they are inherent to a Tkinter GUI
+# class (a window legitimately owns many widgets, the UI builder is long, and
+# event-handler callbacks must accept an `event` argument they may not use).
+[MESSAGES CONTROL]
+disable=
+    too-many-instance-attributes,
+    too-many-statements,
+    too-many-public-methods,
+    unused-argument

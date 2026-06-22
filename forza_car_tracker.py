@@ -12,6 +12,7 @@ import os
 import re
 import sys
 import json
+import ctypes
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
@@ -124,7 +125,7 @@ THEMES = {
     },
 }
 
-APP_VERSION = "1.1"
+APP_VERSION = "1.2"
 
 CHECK_ON = "☑"   # ☑
 CHECK_OFF = "☐"  # ☐
@@ -138,6 +139,10 @@ class CarTracker(tk.Tk):
 
     def __init__(self):
         super().__init__()
+        # Hide the window until it is fully built, themed and positioned, so the
+        # user never sees the empty white window appear and then jump into place.
+        self.withdraw()
+        self.configure(bg=THEMES.get("dark", {}).get("bg", "#1e1f26"))
         self.title(f"Forza Horizon 6 - Car Collection Tracker  v{APP_VERSION}")
         self.minsize(900, 500)
 
@@ -195,24 +200,64 @@ class CarTracker(tk.Tk):
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
 
-    def _restore_geometry(self):
-        """Restore the saved window size/position, clamped to the screen."""
-        geom = self.settings.get("geometry")
-        m = re.fullmatch(r"(\d+)x(\d+)([+-]\d+)([+-]\d+)", geom or "")
-        if m:
-            w, h, x, y = (int(m.group(1)), int(m.group(2)),
-                          int(m.group(3)), int(m.group(4)))
-            sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
-            w = max(900, min(w, sw))
-            h = max(500, min(h, sh))
-            # keep at least a sliver on screen so the window can never get lost
-            x = max(-w + 120, min(x, sw - 120))
-            y = max(0, min(y, sh - 80))
-            self.geometry(f"{w}x{h}+{x}+{y}")
-        else:
-            self.geometry("1180x720")
+        # Everything is built, themed and positioned: now reveal the window in
+        # one go (no white ghost, no visible jump to the saved position).
+        self.update_idletasks()
+        self.deiconify()
         if self.settings.get("maximized"):
             self.state("zoomed")
+
+    def _virtual_desktop(self):
+        """(x, y, w, h) of the whole virtual desktop spanning every monitor.
+
+        winfo_screenwidth/height only describe the primary monitor, so on a
+        multi-monitor setup we ask Windows for the full virtual screen instead.
+        """
+        if sys.platform == "win32":
+            try:
+                user32 = ctypes.windll.user32
+                # SM_XVIRTUALSCREEN=76 Y=77 CXVIRTUALSCREEN=78 CY=79
+                x = user32.GetSystemMetrics(76)
+                y = user32.GetSystemMetrics(77)
+                w = user32.GetSystemMetrics(78)
+                h = user32.GetSystemMetrics(79)
+                if w > 0 and h > 0:
+                    return x, y, w, h
+            except (OSError, AttributeError, ValueError):
+                pass
+        return 0, 0, self.winfo_screenwidth(), self.winfo_screenheight()
+
+    def _center_on_primary(self, w, h):
+        """Place a w x h window roughly centered on the primary monitor."""
+        sw, sh = self.winfo_screenwidth(), self.winfo_screenheight()
+        x = max(0, (sw - w) // 2)
+        y = max(0, (sh - h) // 3)
+        self.geometry(f"{w}x{h}+{x}+{y}")
+
+    def _restore_geometry(self):
+        """Restore saved size/position, validated against ALL monitors.
+
+        The window is only restored where it was if a usable strip of it (incl.
+        the title bar) still falls inside the virtual desktop. If the monitor it
+        lived on is gone or its layout changed, we re-center on the primary one.
+        """
+        geom = self.settings.get("geometry")
+        m = re.fullmatch(r"(\d+)x(\d+)([+-]\d+)([+-]\d+)", geom or "")
+        if not m:
+            self._center_on_primary(1180, 720)
+            return
+        w, h, x, y = (int(m.group(1)), int(m.group(2)),
+                      int(m.group(3)), int(m.group(4)))
+        vx, vy, vw, vh = self._virtual_desktop()
+        w = max(900, min(w, vw))
+        h = max(500, min(h, vh))
+        margin = 120  # how much of the window must stay reachable
+        reachable = (x + w > vx + margin and x < vx + vw - margin
+                     and vy <= y < vy + vh - 40)
+        if reachable:
+            self.geometry(f"{w}x{h}+{x}+{y}")
+        else:
+            self._center_on_primary(w, h)
 
     # ---- UI construction ----
     def _build_ui(self):

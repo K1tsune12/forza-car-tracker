@@ -4,7 +4,7 @@ A simple desktop app to track which Forza Horizon 6 cars you own, with smart
 search, advanced filters, light/dark themes and TXT export. Built with Python +
 Tkinter (no runtime dependencies) and packaged into a single Windows `.exe`.
 
-![Version](https://img.shields.io/badge/version-1.1-blue)
+![Version](https://img.shields.io/badge/version-1.2-blue)
 
 ## Features
 

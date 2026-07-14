@@ -1,8 +1,9 @@
 @echo off
 REM ============================================================
 REM  Build Forza Horizon 6 Car Tracker into a single .exe
+REM  (run from anywhere; this jumps to the project root first)
 REM ============================================================
-cd /d "%~dp0"
+cd /d "%~dp0\.."
 
 echo Installing / updating PyInstaller...
 ".venv\Scripts\python.exe" -m pip install --upgrade pyinstaller
@@ -14,11 +15,11 @@ echo Building executable...
   --onefile ^
   --windowed ^
   --name "Forza Car Tracker" ^
-  --icon "icon.ico" ^
-  --add-data "cars.json;." ^
-  --add-data "image.png;." ^
-  --add-data "icon.ico;." ^
-  forza_car_tracker.py
+  --icon "assets\icon.ico" ^
+  --add-data "data\cars.json;." ^
+  --add-data "assets\image.png;." ^
+  --add-data "assets\icon.ico;." ^
+  "src\forza_car_tracker.py"
 
 echo.
 echo ============================================================

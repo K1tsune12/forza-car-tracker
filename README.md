@@ -26,29 +26,31 @@ Tkinter (no runtime dependencies) and packaged into a single Windows `.exe`.
 ## Run from source
 
 ```bash
-python forza_car_tracker.py
+python src/forza_car_tracker.py
 ```
 
 Requires Python 3.x (uses only the standard library + Tkinter).
 
 ## Build the executable
 
-Run `build.bat` (Windows). It installs PyInstaller and produces
+Run `packaging/build.bat` (Windows). It installs PyInstaller and produces
 `dist/Forza Car Tracker.exe`, a single self-contained file with the car list,
 logo and icon bundled in.
 
-## Files
+## Project layout
 
-| File | What it is |
-|------|------------|
-| `forza_car_tracker.py` | The application |
-| `cars.json` | The car list (Forza Horizon 6) |
-| `image.png` | Forza Horizon logo (header) |
-| `icon.png` / `icon.ico` | App icon |
-| `build.bat` | Builds the `.exe` with PyInstaller |
+```
+forza-car-tracker/
+  src/forza_car_tracker.py    The application
+  data/cars.json              The car list (Forza Horizon 6)
+  assets/image.png            Forza Horizon logo (header)
+  assets/icon.png, icon.ico   App icon
+  packaging/build.bat         Builds the .exe with PyInstaller
+```
 
 Your progress is stored in `owned_cars.json` and your preferences in
-`settings.json`, both created next to the app on first run.
+`settings.json`, both created next to the app on first run (next to the `.exe`
+when built, or in the project root when running from source).
 
 ## Disclaimer
 

@@ -25,17 +25,28 @@ CLASS_CATEGORIES = ["D", "C", "B", "A", "S1", "S2", "R"]
 # ----------------------------------------------------------------------------
 # Paths / data loading
 # ----------------------------------------------------------------------------
+# Project root in dev = the folder above this script's src/ directory.
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
 def resource_path(relative):
-    """Path to a bundled resource, works in dev and inside a PyInstaller exe."""
-    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, relative)
+    """Path to a bundled resource, both in dev and inside a PyInstaller exe.
+
+    PyInstaller bundles the data files flat at the root of _MEIPASS, so when
+    frozen we look them up by base name. In dev they live in the project's
+    subfolders, so `relative` is a path from the project root (e.g.
+    "data/cars.json").
+    """
+    if getattr(sys, "frozen", False):
+        return os.path.join(sys._MEIPASS, os.path.basename(relative))
+    return os.path.join(PROJECT_ROOT, relative)
 
 
 def app_dir():
-    """Folder where the running program lives (next to the .exe when frozen)."""
+    """Folder for user data: next to the .exe when frozen, else the project root."""
     if getattr(sys, "frozen", False):
         return os.path.dirname(sys.executable)
-    return os.path.dirname(os.path.abspath(__file__))
+    return PROJECT_ROOT
 
 
 OWNED_FILE = os.path.join(app_dir(), "owned_cars.json")
@@ -44,7 +55,7 @@ SETTINGS_FILE = os.path.join(app_dir(), "settings.json")
 
 def load_cars():
     """Load the bundled car list; returns (headers, list-of-car-dicts)."""
-    with open(resource_path("cars.json"), "r", encoding="utf-8") as f:
+    with open(resource_path("data/cars.json"), "r", encoding="utf-8") as f:
         data = json.load(f)
     return data["headers"], data["cars"]
 
@@ -148,10 +159,10 @@ class CarTracker(tk.Tk):
 
         # Window / taskbar icon
         try:
-            self.iconbitmap(resource_path("icon.ico"))
+            self.iconbitmap(resource_path("assets/icon.ico"))
         except (tk.TclError, OSError):
             try:
-                self._icon_img = tk.PhotoImage(file=resource_path("icon.png"))
+                self._icon_img = tk.PhotoImage(file=resource_path("assets/icon.png"))
                 self.iconphoto(True, self._icon_img)
             except (tk.TclError, OSError):
                 pass
@@ -265,7 +276,7 @@ class CarTracker(tk.Tk):
         # both light and dark themes.
         self.logo_img = None
         try:
-            self.logo_img = tk.PhotoImage(file=resource_path("image.png"))
+            self.logo_img = tk.PhotoImage(file=resource_path("assets/image.png"))
         except (tk.TclError, OSError):
             self.logo_img = None
 

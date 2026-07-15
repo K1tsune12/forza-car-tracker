@@ -1,11 +1,11 @@
 """
-Forza Horizon 6 - Car Collection Tracker
-----------------------------------------
-A simple desktop app to track which cars you own, with smart search
-across every field and light / dark themes.
+Forza Horizon - Car Collection Tracker
+--------------------------------------
+A desktop app to track which cars you own across Forza Horizon games
+(one tab per game), with smart search, filters and light / dark themes.
 
-Run:      python forza_car_tracker.py
-Build exe: see build.bat  (PyInstaller)
+Run:       python src/forza_car_tracker.py
+Build exe: see packaging/build.bat  (PyInstaller)
 """
 
 import os
@@ -16,9 +16,8 @@ import ctypes
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
-# Collection tags and Car Class categories, in a sensible display order.
-COLLECTION_TAGS = ["Autoshow", "Wheelspin", "Seasonal", "Collection Journal",
-                   "Autoshow DLC", "Loyalty", "Aftermarket"]
+# Car Class categories in ascending order (used to rank/sort class letters;
+# the actual options shown are derived per game from its data).
 CLASS_CATEGORIES = ["D", "C", "B", "A", "S1", "S2", "R"]
 
 
@@ -49,29 +48,51 @@ def app_dir():
     return PROJECT_ROOT
 
 
-OWNED_FILE = os.path.join(app_dir(), "owned_cars.json")
 SETTINGS_FILE = os.path.join(app_dir(), "settings.json")
+# Progress used to live in a single owned_cars.json (FH6 only). It is migrated
+# to the per-game owned_fh6.json on first run so nothing is lost.
+LEGACY_OWNED_FILE = os.path.join(app_dir(), "owned_cars.json")
+
+# Each supported game is fully independent: its own car list and its own saved
+# progress file. Adding a future game is just another entry here.
+GAMES = {
+    "fh6": {"label": "Forza Horizon 6", "short": "FH6",
+            "cars": "data/cars.json",     "owned": "owned_fh6.json"},
+    "fh5": {"label": "Forza Horizon 5", "short": "FH5",
+            "cars": "data/cars_fh5.json", "owned": "owned_fh5.json"},
+}
+GAME_ORDER = ["fh6", "fh5"]      # tab order, left to right
+DEFAULT_GAME = "fh6"             # loaded on first launch
 
 
-def load_cars():
-    """Load the bundled car list; returns (headers, list-of-car-dicts)."""
-    with open(resource_path("data/cars.json"), "r", encoding="utf-8") as f:
+def load_cars(game):
+    """Load a game's bundled car list; returns (headers, list-of-car-dicts)."""
+    with open(resource_path(GAMES[game]["cars"]), "r", encoding="utf-8") as f:
         data = json.load(f)
     return data["headers"], data["cars"]
 
 
-def load_owned():
-    """Return the set of owned car ids saved on disk (empty if none yet)."""
+def owned_path(game):
+    """Path to a game's progress file, next to the app."""
+    return os.path.join(app_dir(), GAMES[game]["owned"])
+
+
+def load_owned(game):
+    """Owned-car ids for a game (migrates the legacy owned_cars.json to FH6)."""
+    path = owned_path(game)
+    if (game == DEFAULT_GAME and not os.path.exists(path)
+            and os.path.exists(LEGACY_OWNED_FILE)):
+        path = LEGACY_OWNED_FILE
     try:
-        with open(OWNED_FILE, "r", encoding="utf-8") as f:
+        with open(path, "r", encoding="utf-8") as f:
             return set(json.load(f))
     except (FileNotFoundError, json.JSONDecodeError):
         return set()
 
 
-def save_owned(owned):
-    """Persist the set of owned car ids to disk."""
-    with open(OWNED_FILE, "w", encoding="utf-8") as f:
+def save_owned(game, owned):
+    """Persist a game's set of owned car ids to its own file."""
+    with open(owned_path(game), "w", encoding="utf-8") as f:
         json.dump(sorted(owned), f, ensure_ascii=False, indent=1)
 
 
@@ -136,7 +157,7 @@ THEMES = {
     },
 }
 
-APP_VERSION = "1.2"
+APP_VERSION = "1.3"
 
 CHECK_ON = "☑"   # ☑
 CHECK_OFF = "☐"  # ☐
@@ -154,7 +175,7 @@ class CarTracker(tk.Tk):
         # user never sees the empty white window appear and then jump into place.
         self.withdraw()
         self.configure(bg=THEMES.get("dark", {}).get("bg", "#1e1f26"))
-        self.title(f"Forza Horizon 6 - Car Collection Tracker  v{APP_VERSION}")
+        self.title(f"Forza Horizon - Car Collection Tracker  v{APP_VERSION}")
         self.minsize(900, 500)
 
         # Window / taskbar icon
@@ -167,29 +188,15 @@ class CarTracker(tk.Tk):
             except (tk.TclError, OSError):
                 pass
 
-        self.headers, self.cars = load_cars()
-        # give every car a stable id (Make + Car Name should be unique enough)
-        # and pull the model year out of the leading digits of the name.
-        for i, c in enumerate(self.cars):
-            c["_id"] = c.get("Car Name", "") + " | " + c.get("Make", "") or str(i)
-            ym = re.match(r"\s*(\d{4})\b", c.get("Car Name", ""))
-            c["_year"] = int(ym.group(1)) if ym else None
-
-        self.owned = load_owned()
         self.settings = load_settings()
+        # Which game's list we start on (remembered between sessions).
+        self.active_game = self.settings.get("game", DEFAULT_GAME)
+        if self.active_game not in GAMES:
+            self.active_game = DEFAULT_GAME
+        self._load_game_data()
+        self._update_window_title()
         self.theme_name = self.settings.get("theme", "dark")
         self._restore_geometry()
-
-        # distinct values for the advanced-filter dropdowns
-        self.makes = sorted({c.get("Make", "") for c in self.cars if c.get("Make")})
-        self.countries = sorted({c.get("Country", "") for c in self.cars
-                                 if c.get("Country")})
-        self.car_types = sorted({c.get("Car Type", "") for c in self.cars
-                                 if c.get("Car Type")})
-        self.add_ons = sorted({c.get("Add-Ons", "") for c in self.cars
-                               if c.get("Add-Ons")})
-        self.years = sorted({c["_year"] for c in self.cars if c["_year"]})
-        self.car_by_id = {c["_id"]: c for c in self.cars}
 
         self.search_var = tk.StringVar()
         self.filter_var = tk.StringVar(value="All")
@@ -217,6 +224,96 @@ class CarTracker(tk.Tk):
         self.deiconify()
         if self.settings.get("maximized"):
             self.state("zoomed")
+        # re-assert the dark title bar now that the window is realized/shown
+        self._apply_titlebar_theme()
+
+    # ---- Game data (per-game, independent) ----
+    def _load_game_data(self):
+        """(Re)load the active game's cars + progress and recompute the
+        distinct values that feed the advanced-filter dropdowns."""
+        self.headers, self.cars = load_cars(self.active_game)
+        # stable id (Car Name + Make) and the model year from the leading digits
+        for i, c in enumerate(self.cars):
+            c["_id"] = c.get("Car Name", "") + " | " + c.get("Make", "") or str(i)
+            ym = re.match(r"\s*(\d{4})\b", c.get("Car Name", ""))
+            c["_year"] = int(ym.group(1)) if ym else None
+
+        self.owned = load_owned(self.active_game)
+
+        self.makes = sorted({c.get("Make", "") for c in self.cars if c.get("Make")})
+        self.countries = sorted({c.get("Country", "") for c in self.cars
+                                 if c.get("Country")})
+        self.car_types = sorted({c.get("Car Type", "") for c in self.cars
+                                 if c.get("Car Type")})
+        self.add_ons = sorted({c.get("Add-Ons", "") for c in self.cars
+                               if c.get("Add-Ons")})
+        # collection tags and class letters vary between games, so derive them
+        # from the data instead of a fixed list (FH5 tops out at S2, FH6 at R).
+        tags = set()
+        for c in self.cars:
+            for t in c.get("Collection", "").split(","):
+                if t.strip():
+                    tags.add(t.strip())
+        self.coll_tags = sorted(tags)
+        rank = {L: i for i, L in enumerate(CLASS_CATEGORIES)}
+        self.class_cats = sorted(
+            {c.get("Car Class", "").split()[-1] for c in self.cars
+             if c.get("Car Class")},
+            key=lambda L: rank.get(L, 99))
+        self.years = sorted({c["_year"] for c in self.cars if c["_year"]})
+        self.car_by_id = {c["_id"]: c for c in self.cars}
+
+    def _update_window_title(self):
+        # Game-neutral: the active tab already shows which game is selected.
+        self.title(f"Forza Horizon - Car Collection Tracker  v{APP_VERSION}")
+
+    def switch_game(self, key):
+        """Swap the whole table over to another game: its own cars, its own
+        saved progress, its own filter options. Nothing is shared or mixed."""
+        if key == self.active_game or key not in GAMES:
+            return
+        self.active_game = key
+        self._load_game_data()
+
+        # filters reference values that differ between games - reset them
+        self.search_var.set("")
+        self.filter_var.set("All")
+        for var in self.adv_vars.values():
+            var.set("All")
+        self.year_from_var.set("All")
+        self.year_to_var.set("All")
+        self.sort_col = None
+        self.sort_reverse = False
+
+        # refresh the dropdown option lists to this game's values
+        self.adv_combos["Make"]["values"] = ["All"] + self.makes
+        self.adv_combos["Collection"]["values"] = ["All"] + self.coll_tags
+        self.adv_combos["Country"]["values"] = ["All"] + self.countries
+        self.adv_combos["Car Type"]["values"] = ["All"] + self.car_types
+        self.adv_combos["Car Class"]["values"] = ["All"] + self.class_cats
+        self.adv_combos["Add-Ons"]["values"] = ["All"] + self.add_ons
+        year_values = ["All"] + [str(y) for y in self.years]
+        self.year_from_combo["values"] = year_values
+        self.year_to_combo["values"] = year_values
+
+        # keep the shared body and the highlighted tab in sync with the data,
+        # whether we got here from a tab click or a direct switch_game() call
+        self.body.pack(in_=self._game_pages[key], fill="both", expand=True)
+        self.game_tabs.select(GAME_ORDER.index(key))
+
+        self._update_window_title()
+        self.settings["game"] = key
+        save_settings(self.settings)
+        self.refresh_table()
+
+    def _on_tab_changed(self, _event=None):
+        """User clicked a game tab: load that game (switch_game moves the shared
+        body and is a no-op if it is already the active game)."""
+        try:
+            idx = self.game_tabs.index(self.game_tabs.select())
+        except tk.TclError:
+            return
+        self.switch_game(GAME_ORDER[idx])
 
     def _virtual_desktop(self):
         """(x, y, w, h) of the whole virtual desktop spanning every monitor.
@@ -272,6 +369,23 @@ class CarTracker(tk.Tk):
 
     # ---- UI construction ----
     def _build_ui(self):
+        # Native tabs (ttk.Notebook), one per game. The whole app UI lives in a
+        # single shared `body` frame that is re-parented into whichever tab is
+        # selected (pack in_=), so the tab shows the real interface - no empty
+        # page area, no duplicated widgets.
+        self.game_tabs = ttk.Notebook(self)
+        self.game_tabs.pack(side="top", fill="both", expand=True)
+        self._game_pages = {}
+        for key in GAME_ORDER:
+            page = tk.Frame(self.game_tabs)
+            self.game_tabs.add(page, text="  " + GAMES[key]["label"] + "  ")
+            self._game_pages[key] = page
+        self.body = tk.Frame(self.game_tabs)
+        self.body.pack(in_=self._game_pages[self.active_game],
+                       fill="both", expand=True)
+        self.game_tabs.select(GAME_ORDER.index(self.active_game))
+        self.game_tabs.bind("<<NotebookTabChanged>>", self._on_tab_changed)
+
         # Header banner with the (white) logo on a dark strip so it shows in
         # both light and dark themes.
         self.logo_img = None
@@ -280,12 +394,12 @@ class CarTracker(tk.Tk):
         except (tk.TclError, OSError):
             self.logo_img = None
 
-        self.header = tk.Frame(self)
+        self.header = tk.Frame(self.body)
         self.header.pack(side="top", fill="x")
         if self.logo_img is not None:
             self.logo_label = tk.Label(self.header, image=self.logo_img, borderwidth=0)
         else:
-            self.logo_label = tk.Label(self.header, text="FORZA HORIZON 6",
+            self.logo_label = tk.Label(self.header, text="FORZA HORIZON",
                                        font=("Segoe UI", 18, "bold"), fg="#ffffff")
         self.logo_label.pack(side="left", padx=18, pady=12)
 
@@ -294,7 +408,7 @@ class CarTracker(tk.Tk):
         self.version_label.pack(side="right", padx=18)
 
         # Top toolbar
-        self.toolbar = tk.Frame(self)
+        self.toolbar = tk.Frame(self.body)
         self.toolbar.pack(side="top", fill="x", padx=12, pady=(12, 6))
 
         self.search_label = tk.Label(self.toolbar, text="Search:")
@@ -336,7 +450,7 @@ class CarTracker(tk.Tk):
         self.theme_btn.pack(side="right")
 
         # Selection / bulk-action bar
-        self.actions = tk.Frame(self)
+        self.actions = tk.Frame(self.body)
         self.actions.pack(side="top", fill="x", padx=12, pady=(0, 6))
 
         self.action_btns = []
@@ -359,7 +473,7 @@ class CarTracker(tk.Tk):
         self.sel_label.pack(side="right")
 
         # Info row (tip + how many are showing) - grid so the hint can shrink
-        self.progress_frame = tk.Frame(self)
+        self.progress_frame = tk.Frame(self.body)
         self.progress_frame.pack(side="top", fill="x", padx=12, pady=(0, 6))
         self.progress_frame.columnconfigure(1, weight=1)
         self.shown_label = tk.Label(self.progress_frame, text="", anchor="w")
@@ -375,7 +489,7 @@ class CarTracker(tk.Tk):
         # Footer / status bar (owned counter) - stays pinned to the bottom.
         # grid with a weighted middle column lets the progress bar stretch and
         # shrink with the window while the labels stay glued to the edges.
-        self.footer = tk.Frame(self)
+        self.footer = tk.Frame(self.body)
         self.footer.pack(side="bottom", fill="x")
         self.footer_inner = tk.Frame(self.footer)
         self.footer_inner.pack(fill="x", padx=12, pady=8)
@@ -397,7 +511,7 @@ class CarTracker(tk.Tk):
         self.pct_label.grid(row=0, column=2, sticky="e")
 
         # Table
-        self.table_frame = tk.Frame(self)
+        self.table_frame = tk.Frame(self.body)
         self.table_frame.pack(side="top", fill="both", expand=True, padx=12, pady=(0, 12))
 
         columns = ["owned"] + self.headers
@@ -450,16 +564,16 @@ class CarTracker(tk.Tk):
 
     def _build_advanced_panel(self):
         """Build the collapsible advanced-filter panel (one dropdown per field)."""
-        self.adv_panel = tk.Frame(self)  # packed/unpacked by toggle_advanced
+        self.adv_panel = tk.Frame(self.body)  # packed/unpacked by toggle_advanced
         self.adv_labels = []
         self.adv_combos = {}
 
         field_values = {
             "Make": ["All"] + self.makes,
-            "Collection": ["All"] + COLLECTION_TAGS,
+            "Collection": ["All"] + self.coll_tags,
             "Country": ["All"] + self.countries,
             "Car Type": ["All"] + self.car_types,
-            "Car Class": ["All"] + CLASS_CATEGORIES,
+            "Car Class": ["All"] + self.class_cats,
             "Add-Ons": ["All"] + self.add_ons,
         }
         # lay fields out in a 3-column grid of (label, dropdown) pairs
@@ -532,7 +646,8 @@ class CarTracker(tk.Tk):
             return
         try:
             with open(path, "w", encoding="utf-8") as f:
-                heading = f"Forza Horizon 6 - {title} ({len(cars)})"
+                heading = (f"{GAMES[self.active_game]['label']} - "
+                           f"{title} ({len(cars)})")
                 f.write(heading + "\n")
                 f.write("=" * len(heading) + "\n\n")
                 for i, c in enumerate(cars, 1):
@@ -577,7 +692,17 @@ class CarTracker(tk.Tk):
         self.style.theme_use("clam")
 
         self.configure(bg=t["bg"])
-        for frame in (self.toolbar, self.actions, self.adv_panel,
+        # game tabs (ttk.Notebook) + the shared body and its host pages
+        self.style.configure("TNotebook", background=t["header_bg"],
+                             borderwidth=0, tabmargins=(6, 4, 6, 0))
+        self.style.configure("TNotebook.Tab", background=t["panel"],
+                             foreground=t["muted"], padding=(18, 7),
+                             borderwidth=0, font=("Segoe UI", 10, "bold"))
+        self.style.map("TNotebook.Tab",
+                       background=[("selected", t["bg"])],
+                       foreground=[("selected", t["accent"])])
+        for frame in (self.body, *self._game_pages.values(),
+                      self.toolbar, self.actions, self.adv_panel,
                       self.progress_frame, self.table_frame):
             frame.configure(bg=t["bg"])
         for frame in (self.footer, self.footer_inner):
@@ -692,6 +817,27 @@ class CarTracker(tk.Tk):
 
         self.settings["theme"] = name
         save_settings(self.settings)
+
+        # match the native window title bar to the theme (Windows only)
+        self._apply_titlebar_theme()
+
+    def _apply_titlebar_theme(self):
+        """Tint the Windows title bar to match the theme (DWM; no-op elsewhere)."""
+        if sys.platform != "win32":
+            return
+        try:
+            self.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+            want_dark = ctypes.c_int(1 if self.theme_name == "dark" else 0)
+            # attribute 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Win10 2004+/Win11);
+            # 19 is the older pre-2004 value - try the modern one first.
+            for attr in (20, 19):
+                ok = ctypes.windll.dwmapi.DwmSetWindowAttribute(
+                    hwnd, attr, ctypes.byref(want_dark), ctypes.sizeof(want_dark))
+                if ok == 0:
+                    break
+        except (OSError, AttributeError, tk.TclError):
+            pass
 
     # ---- Filtering / smart search ----
     def matches(self, car, terms):
@@ -810,7 +956,7 @@ class CarTracker(tk.Tk):
                 self.owned.discard(iid)
                 changed = True
         if changed:
-            save_owned(self.owned)
+            save_owned(self.active_game, self.owned)
             self.refresh_table(keep_selection=list(iids))
 
     def toggle(self, iid):
@@ -882,7 +1028,7 @@ class CarTracker(tk.Tk):
 
     def on_close(self):
         """Save progress, theme and window geometry, then close the window."""
-        save_owned(self.owned)
+        save_owned(self.active_game, self.owned)
         self.settings["theme"] = self.theme_name
         # store a normal-state geometry (not the zoomed/maximized size)
         if self.state() == "zoomed":

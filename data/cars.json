@@ -37,6 +37,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Abarth",
+   "Car Name": "2017 Abarth 124 Spider",
+   "Car Type": "Modern Sports Cars",
+   "Car Class": "450 C",
+   "Country": "Italy",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "Acura",
    "Car Name": "2001 Acura Integra Type R",
    "Car Type": "Retro Hot Hatch",
@@ -224,6 +233,15 @@
    "Country": "UK",
    "Collection": "Autoshow",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Aston Martin",
+   "Car Name": "2003 Aston Martin DB7 GT",
+   "Car Type": "Retro Sports Cars",
+   "Car Class": "566 B",
+   "Country": "UK",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Aston Martin",
@@ -1169,6 +1187,15 @@
    "Country": "Japan",
    "Collection": "Autoshow DLC",
    "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "De Tomaso",
+   "Car Name": "1984 De Tomaso Pantera GT5",
+   "Car Type": "Retro Supercars",
+   "Car Class": "450 C",
+   "Country": "Italy",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
   },
   {
    "Make": "DeBerti",
@@ -2351,6 +2378,15 @@
   },
   {
    "Make": "Honda",
+   "Car Name": "1972 Honda Z GT",
+   "Car Type": "Eclectic Domestics",
+   "Car Class": "100 D",
+   "Country": "Japan",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Honda",
    "Car Name": "1974 Honda Civic RS",
    "Car Type": "Retro Hot Hatch",
    "Car Class": "254 D",
@@ -2999,6 +3035,15 @@
   },
   {
    "Make": "Lamborghini",
+   "Car Name": "2022 Lamborghini Huracán EVO Spyder",
+   "Car Type": "Modern Supercars",
+   "Car Class": "757 S1",
+   "Country": "Italy",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Lamborghini",
    "Car Name": "2022 Lamborghini Huracán Sterrato",
    "Car Type": "Rally Monsters",
    "Car Class": "738 S1",
@@ -3025,12 +3070,30 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Lamborghini",
+   "Car Name": "2024 Lamborghini Temerario",
+   "Car Type": "Hypercars",
+   "Car Class": "801 S2",
+   "Country": "Italy",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "Lancia",
    "Car Name": "1974 Lancia Stratos HF Stradale",
    "Car Type": "Classic Rally",
    "Car Class": "483 C",
    "Country": "Italy",
    "Collection": "Collection Journal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Lancia",
+   "Car Name": "1982 Lancia 037 Stradale",
+   "Car Type": "Retro Rally",
+   "Car Class": "555 B",
+   "Country": "Italy",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -3905,6 +3968,15 @@
    "Country": "Japan",
    "Collection": "Collection Journal",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Nissan",
+   "Car Name": "1972 Nissan Patrol",
+   "Car Type": "Offroad",
+   "Car Class": "157 D",
+   "Country": "Japan",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Nissan",
@@ -5351,6 +5423,15 @@
    "Car Name": "2023 Toyota GR Corolla",
    "Car Type": "Super Hot Hatch",
    "Car Class": "596 B",
+   "Country": "Japan",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Toyota",
+   "Car Name": "2024 Toyota Prius Prime XSE Premium",
+   "Car Type": "Hot Hatch",
+   "Car Class": "472 C",
    "Country": "Japan",
    "Collection": "Autoshow DLC",
    "Add-Ons": "Car Pass"

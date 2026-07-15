@@ -1,15 +1,19 @@
-# Forza Horizon 6 Car Collection Tracker
+# Forza Horizon Car Collection Tracker
 
-A simple desktop app to track which Forza Horizon 6 cars you own, with smart
+A simple desktop app to track which Forza Horizon cars you own, with smart
 search, advanced filters, light/dark themes and TXT export. Built with Python +
 Tkinter (no runtime dependencies) and packaged into a single Windows `.exe`.
 
-![Version](https://img.shields.io/badge/version-1.2-blue)
+![Version](https://img.shields.io/badge/version-1.3-blue)
 
 ## Features
 
+- 🎮 **Two games in tabs**: switch between **Forza Horizon 6** (627 cars) and
+  **Forza Horizon 5** (902 cars) from the tabs at the top. The two lists are
+  fully independent — your owned/progress for each game is tracked separately
+  and never mixed. FH6 loads by default.
 - ☑️ **Check off the cars you own**: click the *Have* box, double-click a row,
-  or press **Space**. Progress is saved automatically.
+  or press **Space**. Progress is saved automatically (per game).
 - 🔍 **Smart search** across every field (multi-term, e.g. `acura 2022 supercar`).
 - ⚙️ **Advanced search panel**: filter by **Make, Collection, Country,
   Car Type, Car Class, Add-Ons** and a **Year** range. All filters combine.
@@ -43,14 +47,17 @@ logo and icon bundled in.
 forza-car-tracker/
   src/forza_car_tracker.py    The application
   data/cars.json              The car list (Forza Horizon 6)
+  data/cars_fh5.json          The car list (Forza Horizon 5)
   assets/image.png            Forza Horizon logo (header)
   assets/icon.png, icon.ico   App icon
   packaging/build.bat         Builds the .exe with PyInstaller
 ```
 
-Your progress is stored in `owned_cars.json` and your preferences in
-`settings.json`, both created next to the app on first run (next to the `.exe`
-when built, or in the project root when running from source).
+Your progress is stored per game in `owned_fh6.json` and `owned_fh5.json`, and
+your preferences (theme, window, last game) in `settings.json` — all created
+next to the app on first run (next to the `.exe` when built, or in the project
+root when running from source). An older single-file `owned_cars.json` is
+migrated automatically to the FH6 progress the first time you run this version.
 
 ## Disclaimer
 

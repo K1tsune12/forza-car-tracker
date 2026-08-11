@@ -110,6 +110,15 @@
   },
   {
    "Make": "Alfa Romeo",
+   "Car Name": "1968 Alfa Romeo Autodelta Tipo 33/2 Daytona",
+   "Car Type": "Classic Racers",
+   "Car Class": "610 A",
+   "Country": "Italy",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Alfa Romeo",
    "Car Name": "1990 Alfa Romeo SE 048SP",
    "Car Type": "Retro Racers",
    "Car Class": "978 R",
@@ -1154,6 +1163,15 @@
   },
   {
    "Make": "Chevrolet",
+   "Car Name": "2024 Chevrolet Camaro ZL1",
+   "Car Type": "Extreme Track Toys",
+   "Car Class": "855 S2",
+   "Country": "USA",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Chevrolet",
    "Car Name": "2024 Chevrolet Corvette E-Ray",
    "Car Type": "Modern Supercars",
    "Car Class": "737 S1",
@@ -1375,6 +1393,15 @@
    "Car Class": "695 A",
    "Country": "USA",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Exomotive",
+   "Car Name": "2018 Exomotive Exocet Sport V8 XP-5",
+   "Car Type": "Track Toys",
+   "Car Class": "776 S1",
+   "Country": "USA",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -1718,6 +1745,15 @@
    "Country": "USA",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Ford",
+   "Car Name": "1957 Ford Thunderbird",
+   "Car Type": "Classic Sports Cars",
+   "Car Class": "276 D",
+   "Country": "USA",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Ford",
@@ -2365,6 +2401,15 @@
    "Car Class": "413 C",
    "Country": "Australia",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Honda",
+   "Car Name": "1970 Honda N600",
+   "Car Type": "Cult Cars",
+   "Car Class": "100 D",
+   "Country": "Japan",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -3836,6 +3881,15 @@
   },
   {
    "Make": "Mitsubishi",
+   "Car Name": "1988 Mitsubishi Starion ESI-R",
+   "Car Type": "Retro Sports Cars",
+   "Car Class": "549 B",
+   "Country": "Japan",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Mitsubishi",
    "Car Name": "1990 Mitsubishi #269 Attacking the Clock Racing Minicab Time Attack",
    "Car Type": "Track Toys",
    "Car Class": "166 D",
@@ -3995,6 +4049,15 @@
    "Country": "Japan",
    "Collection": "Collection Journal",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Nissan",
+   "Car Name": "1983 Nissan Skyline 2000 Turbo RS",
+   "Car Type": "Retro Sports Cars",
+   "Car Class": "470 C",
+   "Country": "Japan",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Nissan",
@@ -4526,6 +4589,15 @@
    "Country": "Germany",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Porsche",
+   "Car Name": "1987 Porsche #203 Porsche AG 961",
+   "Car Type": "Extreme Track Toys",
+   "Car Class": "825 S2",
+   "Country": "Germany",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Porsche",
@@ -5137,6 +5209,15 @@
    "Car Class": "377 D",
    "Country": "Japan",
    "Collection": "Collection Journal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Toyota",
+   "Car Name": "1974 Toyota Celica GT",
+   "Car Type": "Classic Sports Cars",
+   "Car Class": "315 D",
+   "Country": "Japan",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {

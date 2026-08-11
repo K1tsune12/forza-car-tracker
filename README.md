@@ -4,11 +4,11 @@ A simple desktop app to track which Forza Horizon cars you own, with smart
 search, advanced filters, light/dark themes and TXT export. Built with Python +
 Tkinter (no runtime dependencies) and packaged into a single Windows `.exe`.
 
-![Version](https://img.shields.io/badge/version-1.3-blue)
+![Version](https://img.shields.io/badge/version-1.3.1-blue)
 
 ## Features
 
-- 🎮 **Two games in tabs**: switch between **Forza Horizon 6** (627 cars) and
+- 🎮 **Two games in tabs**: switch between **Forza Horizon 6** (636 cars) and
   **Forza Horizon 5** (902 cars) from the tabs at the top. The two lists are
   fully independent — your owned/progress for each game is tracked separately
   and never mixed. FH6 loads by default.

@@ -586,6 +586,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Bentley",
+   "Car Name": "2025 Bentley Continental GT Speed",
+   "Car Type": "GT Cars",
+   "Car Class": "665 A",
+   "Country": "UK",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "BMW",
    "Car Name": "1957 BMW Isetta 300 Export",
    "Car Type": "Cult Cars",
@@ -1394,6 +1403,15 @@
    "Country": "USA",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Dodge",
+   "Car Name": "2023 Dodge Challenger SRT Demon 170",
+   "Car Type": "Modern Muscle",
+   "Car Class": "683 A",
+   "Country": "USA",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Exomotive",
@@ -2314,6 +2332,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Ginetta",
+   "Car Name": "2019 Ginetta G40 Junior",
+   "Car Type": "Track Toys",
+   "Car Class": "520 B",
+   "Country": "UK",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "GMC",
    "Car Name": "1970 GMC Jimmy",
    "Car Type": "Pickups & 4x4's",
@@ -2747,6 +2774,24 @@
   },
   {
    "Make": "Jaguar",
+   "Car Name": "1990 Jaguar XJ-S",
+   "Car Type": "GT Cars",
+   "Car Class": "520 B",
+   "Country": "UK",
+   "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Jaguar",
+   "Car Name": "1990 Jaguar XJ-S Forza Edition",
+   "Car Type": "GT Cars",
+   "Car Class": "700 A",
+   "Country": "UK",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Jaguar",
    "Car Name": "1991 Jaguar Sport XJR-15",
    "Car Type": "Retro Supercars",
    "Car Class": "716 S1",
@@ -2779,6 +2824,15 @@
    "Car Class": "810 S2",
    "Country": "UK",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Jaguar",
+   "Car Name": "2015 Jaguar XKR-S GT",
+   "Car Type": "Track Toys",
+   "Car Class": "778 S1",
+   "Country": "UK",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -3242,6 +3296,15 @@
   },
   {
    "Make": "Lotus",
+   "Car Name": "2002 Lotus Esprit V8",
+   "Car Type": "Retro Supercars",
+   "Car Class": "731 S1",
+   "Country": "UK",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Lotus",
    "Car Name": "2018 Lotus Exige Cup 430",
    "Car Type": "Track Toys",
    "Car Class": "732 S1",
@@ -3599,6 +3662,15 @@
    "Country": "UK",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "McLaren",
+   "Car Name": "2025 McLaren W1",
+   "Car Type": "Hypercars",
+   "Car Class": "918 R",
+   "Country": "UK",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Mercedes-AMG",
@@ -4601,6 +4673,15 @@
   },
   {
    "Make": "Porsche",
+   "Car Name": "1987 Porsche 911 Carrera Coupe 'Luftauto 002'",
+   "Car Type": "Rally Monsters",
+   "Car Class": "561 B",
+   "Country": "Germany",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Porsche",
    "Car Name": "1987 Porsche 959",
    "Car Type": "Retro Supercars",
    "Car Class": "661 A",
@@ -4886,6 +4967,15 @@
    "Country": "France",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Renault",
+   "Car Name": "1998 Renault Sport Spider",
+   "Car Type": "Retro Sports Cars",
+   "Car Class": "508 B",
+   "Country": "France",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Renault",
@@ -5560,6 +5650,15 @@
    "Car Class": "925 R",
    "Country": "UK",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Vauxhall",
+   "Car Name": "2006 Vauxhall Astra VXR",
+   "Car Type": "Hot Hatch",
+   "Car Class": "560 B",
+   "Country": "UK",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {

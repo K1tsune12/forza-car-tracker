@@ -856,6 +856,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "BMW",
+   "Car Name": "2025 BMW M4 CS",
+   "Car Type": "Modern Super Saloons",
+   "Car Class": "733 S1",
+   "Country": "Germany",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "Buick",
    "Car Name": "1987 Buick Regal GNX",
    "Car Type": "Retro Muscle",
@@ -1189,6 +1198,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Citroën",
+   "Car Name": "1970 Citroën 2CV",
+   "Car Type": "Cult Cars",
+   "Car Class": "100 D",
+   "Country": "France",
+   "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
    "Make": "Datsun",
    "Car Name": "1969 Datsun 2000 Roadster",
    "Car Type": "Classic Sports Cars",
@@ -1211,6 +1229,15 @@
    "Car Name": "1972 Datsun #269 Attacking the Clock Racing 240Z 'All Carbon Hill Climb Beast'",
    "Car Type": "Extreme Track Toys",
    "Car Class": "951 R",
+   "Country": "Japan",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Datsun",
+   "Car Name": "1972 Datsun 240Z #5 Rallye",
+   "Car Type": "Classic Rally",
+   "Car Class": "538 B",
    "Country": "Japan",
    "Collection": "Autoshow DLC",
    "Add-Ons": "Car Pass"
@@ -1240,6 +1267,15 @@
    "Car Class": "707 S1",
    "Country": "USA",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "DeBerti",
+   "Car Name": "2018 DeBerti Ford Mustang GT",
+   "Car Type": "Modern Muscle",
+   "Car Class": "733 S1",
+   "Country": "USA",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -1410,6 +1446,15 @@
    "Car Type": "Modern Muscle",
    "Car Class": "683 A",
    "Country": "USA",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Eunos",
+   "Car Name": "1990 Eunos Cosmo",
+   "Car Type": "Retro Sports Cars",
+   "Car Class": "487 C",
+   "Country": "Japan",
    "Collection": "Autoshow DLC",
    "Add-Ons": "Car Pass"
   },
@@ -1745,6 +1790,15 @@
    "Country": "Italy",
    "Collection": "Seasonal",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Ferrari",
+   "Car Name": "2024 Ferrari Purosangue",
+   "Car Type": "Sports Utility Heroes",
+   "Car Class": "713 S1",
+   "Country": "Italy",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Ferrari",
@@ -2423,6 +2477,15 @@
   },
   {
    "Make": "Holden",
+   "Car Name": "1968 Holden Monaro GTS 327",
+   "Car Type": "Classic Muscle",
+   "Car Class": "366 D",
+   "Country": "Australia",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Holden",
    "Car Name": "1977 Holden Torana A9X",
    "Car Type": "Classic Muscle",
    "Car Class": "413 C",
@@ -2563,6 +2626,15 @@
    "Car Class": "430 C",
    "Country": "Japan",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Honda",
+   "Car Name": "2000 Honda Prelude Type SH",
+   "Car Type": "Retro Sports Cars",
+   "Car Class": "455 C",
+   "Country": "Japan",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -2966,6 +3038,15 @@
    "Car Name": "1967 Lamborghini Miura P400",
    "Car Type": "Rare Classics",
    "Car Class": "505 B",
+   "Country": "Italy",
+   "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Lamborghini",
+   "Car Name": "1973 Lamborghini Espada 400 GT",
+   "Car Type": "Retro Supercars",
+   "Car Class": "597 B",
    "Country": "Italy",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
@@ -3761,6 +3842,15 @@
    "Country": "Germany",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Mercedes-AMG",
+   "Car Name": "2024 Mercedes-AMG GT 63 4MATIC+",
+   "Car Type": "Super GT",
+   "Car Class": "742 S1",
+   "Country": "Germany",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Mercedes-Benz",
@@ -5038,6 +5128,15 @@
    "Car Class": "677 A",
    "Country": "USA",
    "Collection": "Wheelspin, Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Saleen",
+   "Car Name": "2004 Saleen S7",
+   "Car Type": "Retro Supercars",
+   "Car Class": "773 S1",
+   "Country": "USA",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {

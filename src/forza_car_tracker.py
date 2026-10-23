@@ -13,12 +13,19 @@ import re
 import sys
 import json
 import ctypes
+import unicodedata
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 
 # Car Class categories in ascending order (used to rank/sort class letters;
 # the actual options shown are derived per game from its data).
 CLASS_CATEGORIES = ["D", "C", "B", "A", "S1", "S2", "R"]
+
+
+def _norm_text(s):
+    """Lowercase and strip accents, for accent-insensitive search / matching."""
+    s = unicodedata.normalize("NFKD", str(s)).encode("ascii", "ignore").decode()
+    return s.lower()
 
 
 # ----------------------------------------------------------------------------
@@ -96,6 +103,28 @@ def save_owned(game, owned):
         json.dump(sorted(owned), f, ensure_ascii=False, indent=1)
 
 
+def tags_path(game):
+    """Path to a game's user-tags file, next to the app."""
+    return os.path.join(app_dir(), f"tags_{game}.json")
+
+
+def load_tags(game):
+    """Return {car_id: set(tags)} for a game (empty if none yet)."""
+    try:
+        with open(tags_path(game), "r", encoding="utf-8") as f:
+            raw = json.load(f)
+        return {cid: set(tags) for cid, tags in raw.items() if tags}
+    except (FileNotFoundError, json.JSONDecodeError, AttributeError):
+        return {}
+
+
+def save_tags(game, tags):
+    """Persist {car_id: iterable of tags} to the game's tags file."""
+    data = {cid: sorted(t) for cid, t in tags.items() if t}
+    with open(tags_path(game), "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+
+
 def load_settings():
     """Return the saved settings dict (empty if none saved yet)."""
     try:
@@ -157,7 +186,7 @@ THEMES = {
     },
 }
 
-APP_VERSION = "1.3.3"
+APP_VERSION = "1.4.0"
 
 CHECK_ON = "☑"   # ☑
 CHECK_OFF = "☐"  # ☐
@@ -206,14 +235,19 @@ class CarTracker(tk.Tk):
                           "Car Class", "Add-Ons")}
         self.year_from_var = tk.StringVar(value="All")
         self.year_to_var = tk.StringVar(value="All")
+        self.tag_filter_var = tk.StringVar(value="All")
         self.adv_open = False
         self.sort_col = None
         self.sort_reverse = False
+        self._save_after = None      # pending debounced view-state save
+        self._loading_view = False   # guard: don't persist while restoring state
 
         self.style = ttk.Style(self)
         self._build_ui()
         self._build_advanced_panel()
         self.apply_theme(self.theme_name)
+        # restore the search / filters / sort left from last session for this game
+        self._apply_view(self.active_game)
         self.refresh_table()
 
         self.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -237,6 +271,9 @@ class CarTracker(tk.Tk):
             c["_id"] = c.get("Car Name", "") + " | " + c.get("Make", "") or str(i)
             ym = re.match(r"\s*(\d{4})\b", c.get("Car Name", ""))
             c["_year"] = int(ym.group(1)) if ym else None
+            # accent-stripped haystack of every field (tags are added at query time)
+            c["_search"] = _norm_text(
+                " ".join(str(c.get(h, "")) for h in self.headers))
 
         self.owned = load_owned(self.active_game)
 
@@ -263,6 +300,21 @@ class CarTracker(tk.Tk):
         self.years = sorted({c["_year"] for c in self.cars if c["_year"]})
         self.car_by_id = {c["_id"]: c for c in self.cars}
 
+        # user-defined tags for this game: {car_id: set(tags)}
+        self.tags = load_tags(self.active_game)
+        self._recompute_all_tags()
+
+    def _recompute_all_tags(self):
+        """Distinct tag names currently in use, sorted (feeds the Tags filter)."""
+        allt = set()
+        for t in self.tags.values():
+            allt |= t
+        self.all_tags = sorted(allt, key=str.lower)
+
+    def _tag_filter_values(self):
+        """Options for the Tags filter dropdown."""
+        return ["All", "— Any tag —", "— Untagged —"] + self.all_tags
+
     def _update_window_title(self):
         # Game-neutral: the active tab already shows which game is selected.
         self.title(f"Forza Horizon - Car Collection Tracker  v{APP_VERSION}")
@@ -272,29 +324,24 @@ class CarTracker(tk.Tk):
         saved progress, its own filter options. Nothing is shared or mixed."""
         if key == self.active_game or key not in GAMES:
             return
+        self._save_view()            # remember the view of the game we are leaving
         self.active_game = key
         self._load_game_data()
 
-        # filters reference values that differ between games - reset them
-        self.search_var.set("")
-        self.filter_var.set("All")
-        for var in self.adv_vars.values():
-            var.set("All")
-        self.year_from_var.set("All")
-        self.year_to_var.set("All")
-        self.sort_col = None
-        self.sort_reverse = False
-
         # refresh the dropdown option lists to this game's values
-        self.adv_combos["Make"]["values"] = ["All"] + self.makes
-        self.adv_combos["Collection"]["values"] = ["All"] + self.coll_tags
-        self.adv_combos["Country"]["values"] = ["All"] + self.countries
-        self.adv_combos["Car Type"]["values"] = ["All"] + self.car_types
-        self.adv_combos["Car Class"]["values"] = ["All"] + self.class_cats
-        self.adv_combos["Add-Ons"]["values"] = ["All"] + self.add_ons
+        self._set_combo_values(self.adv_combos["Make"], ["All"] + self.makes)
+        self._set_combo_values(self.adv_combos["Collection"], ["All"] + self.coll_tags)
+        self._set_combo_values(self.adv_combos["Country"], ["All"] + self.countries)
+        self._set_combo_values(self.adv_combos["Car Type"], ["All"] + self.car_types)
+        self._set_combo_values(self.adv_combos["Car Class"], ["All"] + self.class_cats)
+        self._set_combo_values(self.adv_combos["Add-Ons"], ["All"] + self.add_ons)
+        self._set_combo_values(self.tag_combo, self._tag_filter_values())
         year_values = ["All"] + [str(y) for y in self.years]
-        self.year_from_combo["values"] = year_values
-        self.year_to_combo["values"] = year_values
+        self._set_combo_values(self.year_from_combo, year_values)
+        self._set_combo_values(self.year_to_combo, year_values)
+
+        # restore this game's own saved search / filters / sort
+        self._apply_view(key)
 
         # keep the shared body and the highlighted tab in sync with the data,
         # whether we got here from a tab click or a direct switch_game() call
@@ -419,12 +466,13 @@ class CarTracker(tk.Tk):
             relief="flat", highlightthickness=1,
         )
         self.search_entry.pack(side="left", padx=(6, 4), ipady=4)
-        self.search_var.trace_add("write", lambda *_: self.refresh_table())
+        self.search_var.trace_add("write",
+                                  lambda *_: self._on_view_changed(debounce=True))
         self.search_entry.bind("<Escape>", lambda e: self.search_var.set(""))
 
         self.clear_btn = tk.Button(
             self.toolbar, text="Clear", relief="flat", cursor="hand2",
-            command=lambda: self.search_var.set(""),
+            command=self.clear_all,
         )
         self.clear_btn.pack(side="left", padx=(0, 12))
 
@@ -435,7 +483,8 @@ class CarTracker(tk.Tk):
             values=["All", "Owned", "Not owned"],
         )
         self.filter_combo.pack(side="left", padx=(6, 12))
-        self.filter_combo.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
+        self.filter_combo.bind("<<ComboboxSelected>>",
+                               lambda e: self._on_view_changed())
 
         self.adv_btn = tk.Button(
             self.toolbar, text="⚙ Advanced search ▾", relief="flat",
@@ -466,6 +515,7 @@ class CarTracker(tk.Tk):
         add_action("Select none", self.select_none)
         self.check_btn = add_action("✓ Check selected", self.check_selected)
         self.uncheck_btn = add_action("✗ Uncheck selected", self.uncheck_selected)
+        add_action("🏷 Tags…", self.edit_tags_selected)
         add_action("⤓ Export results", self.export_results)
         add_action("⤓ Export selected", self.export_selected)
 
@@ -514,7 +564,7 @@ class CarTracker(tk.Tk):
         self.table_frame = tk.Frame(self.body)
         self.table_frame.pack(side="top", fill="both", expand=True, padx=12, pady=(0, 12))
 
-        columns = ["owned"] + self.headers
+        columns = ["owned"] + self.headers + ["tags"]
         self.tree = ttk.Treeview(
             self.table_frame, columns=columns, show="headings", selectmode="extended",
         )
@@ -540,6 +590,10 @@ class CarTracker(tk.Tk):
             self.tree.heading(h, text=h, command=lambda c=h: self.sort_by(c))
             self.tree.column(h, width=w, minwidth=mw, anchor="w", stretch=True)
 
+        # user tags column (last) - double-click or right-click a row to edit
+        self.tree.heading("tags", text="Tags", command=lambda: self.sort_by("tags"))
+        self.tree.column("tags", width=160, minwidth=90, anchor="w", stretch=True)
+
         vsb = ttk.Scrollbar(self.table_frame, orient="vertical", command=self.tree.yview)
         hsb = ttk.Scrollbar(self.table_frame, orient="horizontal", command=self.tree.xview)
         self.tree.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
@@ -555,6 +609,7 @@ class CarTracker(tk.Tk):
         self.tree.bind("<space>", self.on_space)
         self.tree.bind("<Return>", self.on_space)
         self.tree.bind("<<TreeviewSelect>>", lambda e: self.update_sel_count())
+        self.tree.bind("<Button-3>", self._on_tree_right_click)
         # Ctrl+A selects every visible row; Ctrl+D clears selection
         self.bind_all("<Control-a>", lambda e: (self.select_all_visible(), "break")[1])
         self.bind_all("<Control-A>", lambda e: (self.select_all_visible(), "break")[1])
@@ -585,7 +640,7 @@ class CarTracker(tk.Tk):
             combo = ttk.Combobox(self.adv_panel, textvariable=self.adv_vars[field],
                                  state="readonly", values=values, width=22)
             combo.grid(row=r, column=c * 2 + 1, sticky="w", padx=(0, 18), pady=4)
-            combo.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
+            self._make_autocomplete(combo, self.adv_vars[field])
             self.adv_combos[field] = combo
 
         # Year range: two dropdowns (from / to) on their own row
@@ -604,38 +659,207 @@ class CarTracker(tk.Tk):
             self.adv_panel, textvariable=self.year_to_var, state="readonly",
             values=year_values, width=9)
         self.year_to_combo.grid(row=2, column=3, sticky="w", padx=(0, 18), pady=4)
-        for combo in (self.year_from_combo, self.year_to_combo):
-            combo.bind("<<ComboboxSelected>>", lambda e: self.refresh_table())
+        self._make_autocomplete(self.year_from_combo, self.year_from_var)
+        self._make_autocomplete(self.year_to_combo, self.year_to_var)
+
+        # Tags filter (user-defined labels) on its own row
+        tlbl = tk.Label(self.adv_panel, text="Tags:", anchor="w")
+        tlbl.grid(row=3, column=0, sticky="w", padx=(0, 6), pady=4)
+        self.adv_labels.append(tlbl)
+        self.tag_combo = ttk.Combobox(
+            self.adv_panel, textvariable=self.tag_filter_var, state="readonly",
+            values=self._tag_filter_values(), width=22)
+        self.tag_combo.grid(row=3, column=1, sticky="w", padx=(0, 18), pady=4)
+        self._make_autocomplete(self.tag_combo, self.tag_filter_var)
 
         self.adv_clear_btn = tk.Button(
             self.adv_panel, text="Clear filters", relief="flat", cursor="hand2",
             command=self.clear_filters, padx=10,
         )
-        self.adv_clear_btn.grid(row=3, column=0, columnspan=2, sticky="w", pady=(8, 2))
+        self.adv_clear_btn.grid(row=4, column=0, columnspan=2, sticky="w", pady=(8, 2))
 
-    def toggle_advanced(self):
-        """Show or hide the advanced-filter panel."""
-        self.adv_open = not self.adv_open
-        if self.adv_open:
+    def _set_adv_open(self, open_):
+        """Show or hide the advanced-filter panel (and update the toggle button)."""
+        self.adv_open = open_
+        if open_:
             self.adv_panel.pack(after=self.toolbar, fill="x", padx=12, pady=(0, 6))
             self.adv_btn.configure(text="⚙ Advanced search ▴")
         else:
             self.adv_panel.pack_forget()
             self.adv_btn.configure(text="⚙ Advanced search ▾")
 
-    def clear_filters(self):
-        """Reset every advanced dropdown (incl. year range) back to 'All'."""
+    def toggle_advanced(self):
+        """Show or hide the advanced-filter panel."""
+        self._set_adv_open(not self.adv_open)
+
+    def _any_adv_active(self):
+        """True if any advanced filter (dropdown, year range or tag) is set."""
+        if any(v.get() != "All" for v in self.adv_vars.values()):
+            return True
+        if self.year_from_var.get() != "All" or self.year_to_var.get() != "All":
+            return True
+        return self.tag_filter_var.get() != "All"
+
+    def _reset_advanced(self):
+        """Set every advanced filter back to 'All' and un-narrow the dropdowns."""
         for var in self.adv_vars.values():
             var.set("All")
         self.year_from_var.set("All")
         self.year_to_var.set("All")
+        self.tag_filter_var.set("All")
+        for combo in (list(self.adv_combos.values())
+                      + [self.year_from_combo, self.year_to_combo, self.tag_combo]):
+            combo["values"] = getattr(combo, "_all_values", list(combo["values"]))
+
+    def clear_filters(self):
+        """Advanced panel's 'Clear filters': reset the advanced filters to 'All'."""
+        self._reset_advanced()
+        self._on_view_changed()
+
+    def clear_all(self):
+        """Top 'Clear' button: wipe the search box AND every advanced filter."""
+        self._loading_view = True
+        try:
+            self.search_var.set("")
+            self._reset_advanced()
+        finally:
+            self._loading_view = False
+        self._on_view_changed()
+
+    # ---- Saved view state (search / filters / sort, remembered per game) ----
+    def _on_view_changed(self, debounce=False):
+        """Refresh the table after a filter/search/sort change and persist it."""
         self.refresh_table()
+        if self._loading_view:
+            return
+        if debounce:
+            self._schedule_save_view()
+        else:
+            self._save_view()
+
+    def _schedule_save_view(self):
+        """Save the view a short moment after the user stops typing in search."""
+        if self._save_after is not None:
+            try:
+                self.after_cancel(self._save_after)
+            except (tk.TclError, ValueError):
+                pass
+        self._save_after = self.after(600, self._save_view)
+
+    def _capture_view(self):
+        """Snapshot the current search / filters / sort as a plain dict."""
+        return {
+            "search": self.search_var.get(),
+            "show": self.filter_var.get(),
+            "adv": {f: v.get() for f, v in self.adv_vars.items()},
+            "year_from": self.year_from_var.get(),
+            "year_to": self.year_to_var.get(),
+            "tag": self.tag_filter_var.get(),
+            "sort_col": self.sort_col,
+            "sort_reverse": self.sort_reverse,
+        }
+
+    def _save_view(self):
+        """Persist the current view for the active game into settings.json."""
+        self._save_after = None
+        if self._loading_view:
+            return
+        self.settings.setdefault("view", {})[self.active_game] = self._capture_view()
+        save_settings(self.settings)
+
+    def _apply_view(self, game):
+        """Restore a game's saved search / filters / sort (or defaults). The
+        advanced panel is opened only if some advanced filter ends up active."""
+        v = (self.settings.get("view") or {}).get(game, {}) or {}
+        self._loading_view = True
+        try:
+            self.search_var.set(v.get("search", "") or "")
+            show = v.get("show", "All")
+            self.filter_var.set(show if show in ("All", "Owned", "Not owned") else "All")
+            for f, var in self.adv_vars.items():
+                combo = self.adv_combos[f]
+                allv = getattr(combo, "_all_values", list(combo["values"]))
+                combo["values"] = allv            # undo any narrowing from typing
+                val = (v.get("adv") or {}).get(f, "All")
+                var.set(val if val in allv else "All")
+            for combo, var, key in (
+                    (self.year_from_combo, self.year_from_var, "year_from"),
+                    (self.year_to_combo, self.year_to_var, "year_to")):
+                allv = getattr(combo, "_all_values", list(combo["values"]))
+                combo["values"] = allv
+                val = v.get(key, "All")
+                var.set(val if val in allv else "All")
+            tallv = getattr(self.tag_combo, "_all_values", list(self.tag_combo["values"]))
+            self.tag_combo["values"] = tallv
+            tagv = v.get("tag", "All")
+            self.tag_filter_var.set(tagv if tagv in tallv else "All")
+            self.sort_col = v.get("sort_col") or None
+            self.sort_reverse = bool(v.get("sort_reverse", False))
+        finally:
+            self._loading_view = False
+        self._set_adv_open(self._any_adv_active())
+
+    # ---- Type-ahead dropdowns ----
+    def _set_combo_values(self, combo, values):
+        """Set a combo's option list, remembering the full list for autocomplete."""
+        combo._all_values = list(values)
+        combo["values"] = list(values)
+
+    def _make_autocomplete(self, combo, var):
+        """Turn a readonly dropdown into a type-ahead one: typing narrows the list
+        and inline-completes to the best match; the value is committed (and the
+        filter applied) when you pick, press Enter or leave the field."""
+        combo.configure(state="normal")
+        combo._all_values = list(combo["values"])
+        combo.bind("<KeyRelease>", lambda e, c=combo: self._combo_type(c, e))
+        combo.bind("<<ComboboxSelected>>",
+                   lambda e, c=combo, v=var: self._combo_commit(c, v))
+        combo.bind("<Return>", lambda e, c=combo, v=var: self._combo_commit(c, v))
+        combo.bind("<FocusOut>", lambda e, c=combo, v=var: self._combo_commit(c, v))
+
+    def _combo_type(self, combo, event):
+        """As the user types: filter the dropdown to matches and inline-complete."""
+        if event.keysym in ("Up", "Down", "Left", "Right", "Return", "Escape",
+                            "Tab", "Shift_L", "Shift_R", "Control_L", "Control_R"):
+            return
+        allv = getattr(combo, "_all_values", list(combo["values"]))
+        typed = combo.get()
+        normt = _norm_text(typed)
+        if not normt:
+            combo["values"] = allv
+            return
+        starts = [v for v in allv if _norm_text(v).startswith(normt)]
+        contains = [v for v in allv if normt in _norm_text(v) and v not in starts]
+        combo["values"] = (starts + contains) or allv
+        # inline completion: fill the first prefix match, keep the typed part,
+        # and select the suggested suffix (skipped while erasing)
+        if starts and event.keysym not in ("BackSpace", "Delete"):
+            combo.delete(0, "end")
+            combo.insert(0, starts[0])
+            combo.icursor(len(typed))
+            combo.selection_range(len(typed), "end")
+
+    def _combo_commit(self, combo, var):
+        """Snap the field to a real option (or 'All') and apply the filter."""
+        if self._loading_view:
+            return
+        allv = getattr(combo, "_all_values", list(combo["values"]))
+        nt = _norm_text(combo.get().strip())
+        canon = next((v for v in allv if _norm_text(v) == nt), None)
+        combo["values"] = allv
+        if canon is None:
+            canon = "All" if "All" in allv else (allv[0] if allv else "")
+        if var.get() != canon:
+            var.set(canon)
+            self._on_view_changed()
+        else:
+            var.set(canon)  # normalize the displayed text even if unchanged
 
     # ---- Export ----
     def export_cars_txt(self, cars, suggested, title):
         """Save a list of cars to a readable plain-text (.txt) file."""
         if not cars:
-            messagebox.showinfo("Export", "There is nothing to export.")
+            self._message("Export", "There is nothing to export.")
             return
         path = filedialog.asksaveasfilename(
             title="Export cars to TXT", defaultextension=".txt",
@@ -659,10 +883,9 @@ class CarTracker(tk.Tk):
                     if details:
                         f.write(f"      {details}\n")
         except OSError as exc:
-            messagebox.showerror("Export error", str(exc))
+            self._message("Export error", str(exc), kind="error")
             return
-        messagebox.showinfo("Export",
-                            f"Exported {len(cars)} cars to:\n{path}")
+        self._message("Export", f"Exported {len(cars)} cars to:\n{path}")
 
     def export_results(self):
         """Export every car currently shown (after search + filters) as TXT."""
@@ -821,13 +1044,15 @@ class CarTracker(tk.Tk):
         # match the native window title bar to the theme (Windows only)
         self._apply_titlebar_theme()
 
-    def _apply_titlebar_theme(self):
-        """Tint the Windows title bar to match the theme (DWM; no-op elsewhere)."""
+    def _apply_titlebar_theme(self, win=None):
+        """Tint a window's Windows title bar to match the theme (DWM; no-op
+        elsewhere). Defaults to the main window; pass a Toplevel for dialogs."""
         if sys.platform != "win32":
             return
+        win = win or self
         try:
-            self.update_idletasks()
-            hwnd = ctypes.windll.user32.GetParent(self.winfo_id())
+            win.update_idletasks()
+            hwnd = ctypes.windll.user32.GetParent(win.winfo_id())
             want_dark = ctypes.c_int(1 if self.theme_name == "dark" else 0)
             # attribute 20 = DWMWA_USE_IMMERSIVE_DARK_MODE (Win10 2004+/Win11);
             # 19 is the older pre-2004 value - try the modern one first.
@@ -839,10 +1064,55 @@ class CarTracker(tk.Tk):
         except (OSError, AttributeError, tk.TclError):
             pass
 
+    def _message(self, title, text, kind="info"):
+        """A small, theme-matching, modal replacement for messagebox popups
+        (so the body and the Windows title bar follow the dark/light theme)."""
+        t = THEMES[self.theme_name]
+        dlg = tk.Toplevel(self)
+        dlg.withdraw()
+        dlg.title(title)
+        dlg.configure(bg=t["bg"])
+        dlg.transient(self)
+        dlg.resizable(False, False)
+
+        icon = "⚠" if kind in ("error", "warn") else "ℹ"
+        icon_fg = "#e26d6d" if kind == "error" else (
+            "#e0a106" if kind == "warn" else t["accent"])
+        row = tk.Frame(dlg, bg=t["bg"])
+        row.pack(fill="both", padx=18, pady=(18, 10))
+        tk.Label(row, text=icon, bg=t["bg"], fg=icon_fg,
+                 font=("Segoe UI", 20, "bold")).pack(side="left", padx=(0, 12))
+        tk.Label(row, text=text, bg=t["bg"], fg=t["fg"], justify="left",
+                 wraplength=360).pack(side="left", anchor="w")
+
+        btns = tk.Frame(dlg, bg=t["bg"])
+        btns.pack(fill="x", padx=18, pady=(0, 16))
+        ok = tk.Button(btns, text="OK", command=dlg.destroy, relief="flat",
+                       bg=t["accent"], fg="#ffffff", activebackground=t["accent"],
+                       activeforeground="#ffffff", cursor="hand2", padx=18)
+        ok.pack(side="right")
+        dlg.bind("<Return>", lambda e: dlg.destroy())
+        dlg.bind("<Escape>", lambda e: dlg.destroy())
+
+        dlg.update_idletasks()
+        px, py = self.winfo_rootx(), self.winfo_rooty()
+        pw, ph = self.winfo_width(), self.winfo_height()
+        w, h = dlg.winfo_width(), dlg.winfo_height()
+        dlg.geometry(f"+{px + (pw - w) // 2}+{py + (ph - h) // 3}")
+        self._apply_titlebar_theme(dlg)
+        dlg.deiconify()
+        ok.focus_set()
+        dlg.grab_set()
+        self.wait_window(dlg)
+
     # ---- Filtering / smart search ----
     def matches(self, car, terms):
-        """Smart search: every whitespace-separated term must appear in some field."""
-        haystack = " ".join(str(car.get(h, "")) for h in self.headers).lower()
+        """Smart search: every term must appear somewhere in the car's fields OR
+        in its tags. Accent-insensitive (terms are already normalized)."""
+        haystack = car.get("_search", "")
+        tg = self.tags.get(car["_id"])
+        if tg:
+            haystack = haystack + " " + _norm_text(" ".join(tg))
         return all(term in haystack for term in terms)
 
     def adv_match(self, car):
@@ -869,11 +1139,21 @@ class CarTracker(tk.Tk):
             return False
         if yt != "All" and (year is None or year > int(yt)):
             return False
+
+        # tag filter (user-defined labels)
+        tsel = self.tag_filter_var.get()
+        if tsel != "All":
+            ct = self.tags.get(car["_id"], set())
+            if tsel == "— Any tag —":
+                return bool(ct)
+            if tsel == "— Untagged —":
+                return not ct
+            return tsel in ct
         return True
 
     def visible_cars(self):
         """Return cars passing the search text, the Show filter and advanced filters."""
-        terms = [w for w in self.search_var.get().lower().split() if w]
+        terms = [_norm_text(w) for w in self.search_var.get().split() if w.strip()]
         flt = self.filter_var.get()
         out = []
         for c in self.cars:
@@ -897,6 +1177,7 @@ class CarTracker(tk.Tk):
             self.sort_col = col
             self.sort_reverse = False
         self.refresh_table()
+        self._save_view()
 
     def refresh_table(self, keep_selection=None):
         """Rebuild the table from the current filter/sort and update counters."""
@@ -908,6 +1189,10 @@ class CarTracker(tk.Tk):
         if self.sort_col:
             if self.sort_col == "owned":
                 cars.sort(key=lambda c: c["_id"] in self.owned, reverse=self.sort_reverse)
+            elif self.sort_col == "tags":
+                cars.sort(key=lambda c: ", ".join(
+                    sorted(self.tags.get(c["_id"], ()))).lower(),
+                    reverse=self.sort_reverse)
             else:
                 cars.sort(key=lambda c: str(c.get(self.sort_col, "")).lower(),
                           reverse=self.sort_reverse)
@@ -915,7 +1200,8 @@ class CarTracker(tk.Tk):
         for i, c in enumerate(cars):
             owned = c["_id"] in self.owned
             values = [CHECK_ON if owned else CHECK_OFF] + \
-                     [c.get(h, "") for h in self.headers]
+                     [c.get(h, "") for h in self.headers] + \
+                     [", ".join(sorted(self.tags.get(c["_id"], ())))]
             tags = ["even" if i % 2 else "odd"]
             if owned:
                 tags.append("owned")
@@ -1014,10 +1300,19 @@ class CarTracker(tk.Tk):
         return None
 
     def on_double_click(self, event):
-        """Toggle the double-clicked car."""
+        """Toggle the double-clicked car — or edit its tags if the Tags cell."""
         if self.tree.identify_region(event.x, event.y) != "cell":
             return None
         iid = self.tree.identify_row(event.y)
+        if not iid:
+            return None
+        # the last column is Tags -> open the tag editor instead of toggling
+        if self.tree.identify_column(event.x) == f"#{len(self.tree['columns'])}":
+            if iid not in self.tree.selection():
+                self.tree.selection_set(iid)
+                self.tree.focus(iid)
+            self._open_tag_dialog([iid])
+            return "break"
         self.toggle(iid)
         return "break"
 
@@ -1026,9 +1321,146 @@ class CarTracker(tk.Tk):
         self.toggle_selected()
         return "break"
 
+    # ---- Tags (user-defined labels) ----
+    def _selected_or_focused(self):
+        """Car ids of the current selection (or the focused row if none)."""
+        sel = list(self.tree.selection())
+        if not sel and self.tree.focus():
+            sel = [self.tree.focus()]
+        return [i for i in sel if i in self.car_by_id]
+
+    def edit_tags_selected(self):
+        """Open the tag editor for the selected car(s)."""
+        ids = self._selected_or_focused()
+        if not ids:
+            self._message("Tags", "Select one or more cars first.")
+            return
+        self._open_tag_dialog(ids)
+
+    def _on_tree_right_click(self, event):
+        """Right-click a row -> small menu to edit that car's / selection's tags."""
+        row = self.tree.identify_row(event.y)
+        if row and row not in self.tree.selection():
+            self.tree.selection_set(row)
+            self.tree.focus(row)
+        menu = tk.Menu(self, tearoff=0)
+        menu.add_command(label="Edit tags…", command=self.edit_tags_selected)
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
+        return "break"
+
+    def _apply_tag_changes(self, ids, add, remove):
+        """Add/remove the given tags on every id, then persist + refresh."""
+        changed = False
+        for cid in ids:
+            cur = self.tags.get(cid, set())
+            new = (cur | add) - remove
+            if new != cur:
+                if new:
+                    self.tags[cid] = new
+                else:
+                    self.tags.pop(cid, None)
+                changed = True
+        if changed:
+            save_tags(self.active_game, self.tags)
+            self._recompute_all_tags()
+            self._set_combo_values(self.tag_combo, self._tag_filter_values())
+            if self.tag_filter_var.get() not in self.tag_combo._all_values:
+                self.tag_filter_var.set("All")
+            self.refresh_table()
+
+    def _open_tag_dialog(self, ids):
+        """A small dialog to toggle existing tags and create new ones for `ids`.
+
+        Only the checkboxes the user actually changes are applied, so a tag that
+        some (but not all) of the selected cars have is left untouched."""
+        t = THEMES[self.theme_name]
+        dlg = tk.Toplevel(self)
+        dlg.withdraw()               # stay hidden until the dark title bar is set
+        dlg.title(f"Tags — {len(ids)} car(s)")
+        dlg.configure(bg=t["bg"])
+        dlg.transient(self)
+        dlg.resizable(False, False)
+
+        tk.Label(dlg, text=f"Tags for {len(ids)} selected car(s):",
+                 bg=t["bg"], fg=t["fg"], font=("Segoe UI", 10, "bold")
+                 ).pack(anchor="w", padx=14, pady=(14, 8))
+
+        box = tk.Frame(dlg, bg=t["bg"])
+        box.pack(fill="both", padx=14)
+        states, initial = {}, {}
+        for tag in self.all_tags:
+            have = sum(1 for cid in ids if tag in self.tags.get(cid, set()))
+            allhave = have == len(ids)
+            var = tk.BooleanVar(value=allhave)
+            states[tag], initial[tag] = var, allhave
+            text = tag if (have in (0, len(ids))) else f"{tag}   (in {have}/{len(ids)})"
+            tk.Checkbutton(box, text=text, variable=var, bg=t["bg"], fg=t["fg"],
+                           selectcolor=t["panel"], activebackground=t["bg"],
+                           activeforeground=t["fg"], anchor="w",
+                           highlightthickness=0).pack(fill="x", anchor="w")
+        if not self.all_tags:
+            tk.Label(box, text="(no tags yet — create one below)",
+                     bg=t["bg"], fg=t["muted"]).pack(anchor="w")
+
+        newrow = tk.Frame(dlg, bg=t["bg"])
+        newrow.pack(fill="x", padx=14, pady=(10, 4))
+        tk.Label(newrow, text="New tag:", bg=t["bg"], fg=t["fg"]).pack(side="left")
+        newvar = tk.StringVar()
+        ent = tk.Entry(newrow, textvariable=newvar, bg=t["field_bg"], fg=t["field_fg"],
+                       insertbackground=t["field_fg"], relief="flat",
+                       highlightthickness=1, highlightbackground=t["border"],
+                       highlightcolor=t["accent"])
+        ent.pack(side="left", fill="x", expand=True, padx=(6, 0), ipady=3)
+
+        def apply_and_close():
+            add, remove = set(), set()
+            for tag, var in states.items():
+                if var.get() and not initial[tag]:
+                    add.add(tag)
+                elif not var.get() and initial[tag]:
+                    remove.add(tag)
+            nt = newvar.get().strip()
+            if nt:
+                add.add(nt)
+            self._apply_tag_changes(ids, add, remove)
+            dlg.destroy()
+
+        btns = tk.Frame(dlg, bg=t["bg"])
+        btns.pack(fill="x", padx=14, pady=14)
+        tk.Button(btns, text="Apply", command=apply_and_close, relief="flat",
+                  bg=t["accent"], fg="#ffffff", activebackground=t["accent"],
+                  activeforeground="#ffffff", cursor="hand2", padx=14).pack(side="right")
+        tk.Button(btns, text="Cancel", command=dlg.destroy, relief="flat",
+                  bg=t["panel"], fg=t["fg"], activebackground=t["panel"],
+                  activeforeground=t["fg"], cursor="hand2", padx=14
+                  ).pack(side="right", padx=(0, 6))
+        ent.bind("<Return>", lambda e: apply_and_close())
+        dlg.bind("<Escape>", lambda e: dlg.destroy())
+
+        dlg.update_idletasks()
+        px, py = self.winfo_rootx(), self.winfo_rooty()
+        pw, ph = self.winfo_width(), self.winfo_height()
+        w, h = dlg.winfo_width(), dlg.winfo_height()
+        dlg.geometry(f"+{px + (pw - w) // 2}+{py + (ph - h) // 3}")
+        self._apply_titlebar_theme(dlg)   # match the dark title bar before showing
+        dlg.deiconify()
+        ent.focus_set()
+        dlg.grab_set()
+
     def on_close(self):
-        """Save progress, theme and window geometry, then close the window."""
+        """Save progress, view state, theme and window geometry, then close."""
+        # cancel a pending debounced view-save so it can't fire after destroy()
+        if self._save_after is not None:
+            try:
+                self.after_cancel(self._save_after)
+            except (tk.TclError, ValueError):
+                pass
+            self._save_after = None
         save_owned(self.active_game, self.owned)
+        self.settings.setdefault("view", {})[self.active_game] = self._capture_view()
         self.settings["theme"] = self.theme_name
         # store a normal-state geometry (not the zoomed/maximized size)
         if self.state() == "zoomed":

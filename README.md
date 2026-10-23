@@ -4,7 +4,7 @@ A simple desktop app to track which Forza Horizon cars you own, with smart
 search, advanced filters, light/dark themes and TXT export. Built with Python +
 Tkinter (no runtime dependencies) and packaged into a single Windows `.exe`.
 
-![Version](https://img.shields.io/badge/version-1.3.3-blue)
+![Version](https://img.shields.io/badge/version-1.4.0-blue)
 
 ## Features
 
@@ -16,7 +16,15 @@ Tkinter (no runtime dependencies) and packaged into a single Windows `.exe`.
   or press **Space**. Progress is saved automatically (per game).
 - 🔍 **Smart search** across every field (multi-term, e.g. `acura 2022 supercar`).
 - ⚙️ **Advanced search panel**: filter by **Make, Collection, Country,
-  Car Type, Car Class, Add-Ons** and a **Year** range. All filters combine.
+  Car Type, Car Class, Add-Ons**, a **Year** range and your **Tags**. All
+  filters combine.
+- 🏷️ **Tags**: label cars (e.g. *to tune later*) via the **🏷 Tags…** button,
+  a double-click on the Tags column, or right-click → *Edit tags…*; then filter
+  by a tag, *Any tag* or *Untagged*. Saved per game.
+- 💾 **Remembers your view**: the search text, Show filter, advanced filters,
+  tag filter and sort are restored next time you open — per game. The advanced
+  panel opens on launch only if one of its filters is active, otherwise it stays
+  hidden.
 - 🎨 **Light & dark themes** (remembers your choice).
 - 📐 **Smart resizing**: columns fluidly fill the window with a minimum width;
   the horizontal scrollbar kicks in when it gets narrow.

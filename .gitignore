@@ -11,8 +11,10 @@ dist/
 *.spec
 
 # App-generated user data (created next to the app at runtime):
-# per-game progress (owned_fh6.json, owned_fh5.json) and the legacy owned_cars.json
+# per-game progress (owned_fh6.json, owned_fh5.json), the legacy owned_cars.json,
+# per-game tags (tags_fh6.json, tags_fh5.json) and preferences/saved view state.
 owned_*.json
+tags_*.json
 settings.json
 
 # Lint / test caches

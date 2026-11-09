@@ -146,6 +146,15 @@
   },
   {
    "Make": "Alfa Romeo",
+   "Car Name": "2011 Alfa Romeo Giulietta Quadrifoglio Verde",
+   "Car Type": "Hot Hatch",
+   "Car Class": "498 C",
+   "Country": "Italy",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Alfa Romeo",
    "Car Name": "2014 Alfa Romeo 4C",
    "Car Type": "Modern Sports Cars",
    "Car Class": "644 A",
@@ -1207,6 +1216,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Citroën",
+   "Car Name": "2025 Citroën Ami",
+   "Car Type": "Cult Cars",
+   "Car Class": "100 D",
+   "Country": "France",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "Datsun",
    "Car Name": "1969 Datsun 2000 Roadster",
    "Car Type": "Classic Sports Cars",
@@ -1810,6 +1828,15 @@
    "Add-Ons": "Italian Passion Car Pack"
   },
   {
+   "Make": "Fiat",
+   "Car Name": "1987 Fiat Panda",
+   "Car Type": "Cult Cars",
+   "Car Class": "141 D",
+   "Country": "Italy",
+   "Collection": "Seasonal",
+   "Add-Ons": ""
+  },
+  {
    "Make": "Ford",
    "Car Name": "1932 Ford De Luxe Five-Window Coupe",
    "Car Type": "Rods and Customs",
@@ -2260,6 +2287,15 @@
    "Add-Ons": ""
   },
   {
+   "Make": "Ford",
+   "Car Name": "2025 Ford Mustang GTD",
+   "Car Type": "Track Toys",
+   "Car Class": "781 S1",
+   "Country": "USA",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
    "Make": "Formula Drift",
    "Car Name": "1989 Formula Drift #98 BMW 325i",
    "Car Type": "Drift Cars",
@@ -2473,6 +2509,15 @@
    "Car Class": "870 S2",
    "Country": "USA",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Hillman",
+   "Car Name": "1966 Hillman Imp",
+   "Car Type": "Cult Cars",
+   "Car Class": "244 D",
+   "Country": "UK",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -2725,6 +2770,15 @@
    "Car Class": "580 B",
    "Country": "Japan",
    "Collection": "Autoshow, Wheelspin",
+   "Add-Ons": ""
+  },
+  {
+   "Make": "Honda",
+   "Car Name": "2016 Honda S660 Alpha",
+   "Car Type": "Eclectic Domestics",
+   "Car Class": "393 D",
+   "Country": "Japan",
+   "Collection": "Seasonal",
    "Add-Ons": ""
   },
   {
@@ -4214,6 +4268,15 @@
   },
   {
    "Make": "Nissan",
+   "Car Name": "1983 Nissan 240RS",
+   "Car Type": "Rally Monsters",
+   "Car Class": "545 B",
+   "Country": "Japan",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
+  },
+  {
+   "Make": "Nissan",
    "Car Name": "1983 Nissan Skyline 2000 Turbo RS",
    "Car Type": "Retro Sports Cars",
    "Car Class": "414 C",
@@ -5003,6 +5066,15 @@
    "Country": "Germany",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Porsche",
+   "Car Name": "2025 Porsche Macan GTS",
+   "Car Type": "Sports Utility Heroes",
+   "Car Class": "647 A",
+   "Country": "Germany",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Radical",
@@ -5885,6 +5957,15 @@
    "Country": "Germany",
    "Collection": "Autoshow, Wheelspin",
    "Add-Ons": ""
+  },
+  {
+   "Make": "Volkswagen",
+   "Car Name": "2025 Volkswagen Electric Buzz",
+   "Car Type": "Utility Heroes",
+   "Car Class": "420 C",
+   "Country": "Germany",
+   "Collection": "Autoshow DLC",
+   "Add-Ons": "Car Pass"
   },
   {
    "Make": "Volvo",

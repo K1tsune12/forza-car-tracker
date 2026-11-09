@@ -186,7 +186,7 @@ THEMES = {
     },
 }
 
-APP_VERSION = "1.4.0"
+APP_VERSION = "1.4.1"
 
 CHECK_ON = "☑"   # ☑
 CHECK_OFF = "☐"  # ☐
